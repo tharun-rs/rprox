@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	AppPort  string `env:"PORT" envDefault:":8080"`
-	RedisURL string `env:"REDIS_URL" envDefault:"redis://localhost:6379"`
+	RedisURL string `env:"REDIS_URL" envDefault:"localhost:6379"`
 	RedisPass string `env:"REDIS_PASS" envDefault:""`
 	RedisDB   int    `env:"REDIS_DB" envDefault:"0"`
 }
