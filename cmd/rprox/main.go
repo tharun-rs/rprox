@@ -34,16 +34,10 @@ func main() {
 }
 
 func handleReverseProxy(w http.ResponseWriter, r *http.Request) {
-	// Extract the first path segment as the key for Redis
-	pathSegments := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(pathSegments) == 0 || pathSegments[0] == "" {
-		http.Error(w, "No route found", http.StatusBadGateway)
-		return
-	}
+	host := r.Host // e.g. branchabc.dev.rst11.in
+	subdomain := strings.Split(host, ".")[0] // extract 'branchabc'
 
-	key := pathSegments[0]
-
-	targetURLStr, err := store.Get(key)
+	targetURLStr, err := store.Get(subdomain)
 	if err != nil || targetURLStr == "" {
 		http.Error(w, "No route found", http.StatusBadGateway)
 		return
@@ -55,31 +49,13 @@ func handleReverseProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build the new path by appending the remaining path segments after the first
-	remainingPath := "/"
-	if len(pathSegments) > 1 {
-		remainingPath += strings.Join(pathSegments[1:], "/")
-	}
-
-	// Preserve query parameters as well
-	if r.URL.RawQuery != "" {
-		remainingPath += "?" + r.URL.RawQuery
-	}
-
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
 		originalDirector(req)
-
-		// Set Host header to target host
 		req.Host = target.Host
-
-		// Override the request path with the target's base path + remaining path from original URL
-		req.URL.Path = singleJoiningSlash(target.Path, remainingPath)
-		req.URL.RawPath = ""
-
-		// Optionally update req.URL.RawQuery if needed (already preserved above)
+		req.URL.Path = singleJoiningSlash(target.Path, r.URL.Path)
 	}
 
 	proxy.ServeHTTP(w, r)
