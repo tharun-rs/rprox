@@ -15,6 +15,7 @@ var store *redis.RedisClient
 
 func main() {
 	config.Init()
+	store = &redis.RedisClient{}
 
 	if err := store.Init(config.Cfg); err != nil {
 		logger.Log.Errorf("Failed to connect to Redis: %v", err)
